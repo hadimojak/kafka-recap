@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "axios": "^1.13.2",
     "express": "^4.21.1",
     "kafkajs": "^2.2.4"
   },
@@ -7,9 +8,8 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
-    "start": "nodemon server.js",
+    "start": "node server.js",
     "producer": "nodemon producer.js",
     "consumer": "nodemon consumer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
