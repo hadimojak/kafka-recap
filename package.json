@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "express": "^4.21.1",
+    "kafkajs": "^2.2.4"
+  },
+  "name": "kafka-recap",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "start": "nodemon server.js",
+    "producer": "nodemon producer.js",
+    "consumer": "nodemon consumer.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hadimojak/kafka-recap.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/hadimojak/kafka-recap/issues"
+  },
+  "homepage": "https://github.com/hadimojak/kafka-recap#readme"
+}
