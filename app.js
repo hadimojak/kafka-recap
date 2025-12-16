@@ -107,21 +107,23 @@ app.post("/produce/bulk", async (req, res) => {
     });
 
     //send batch per partition
-console.log();
-    
+    console.log(messages);
+    res.status(200).json({ok:true,data:messages});
 
-    res.status(200).json({
-      ok: true,
-      // data: {
-      //   topic,
-      //   key,
-      //   value,
-      //   partition: first?.partition,
-      //   baseOffset: first?.baseOffset,
-      //   logAppendTime: first?.logAppendTime,
-      //   logStartOffset: first?.logStartOffset,
-      // },
-    });
+    // const results = await Promise.all(
+    //   Object.entries(partitionGroups).map(
+    //     ([partition, { producer, messages }]) =>
+    //       producer.sendBatch(topic, messages, parseInt(partition))
+    //   )
+    // );
+
+    // const totalSent = results.reduce((sum, result) => sum + result.length, 0);
+
+    // res.status(200).json({
+    //   ok: true,
+    //   sent: totalSent,
+    //   batches: results.length,
+    // });
   } catch (err) {
     console.error("Error producing message:", err);
     res.status(500).json({ error: "Failed to produce message" });
