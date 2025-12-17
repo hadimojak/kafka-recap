@@ -1,5 +1,6 @@
 import express from "express";
 import pMap from "p-map";
+import { AssignerProtocol } from "kafkajs";
 import { Utils } from "./utils/index.js";
 import { KafkaConnect } from "./connection/connect.js";
 import { KafkaProducer } from "./producer/kafkaProducer.js";
@@ -18,11 +19,57 @@ const port = 3000;
 const producer0 = new KafkaProducer(kafkaConnection.kafka);
 const producer1 = new KafkaProducer(kafkaConnection.kafka);
 
+const createManualPartitionAssigner = ({ groupId, logger, cluster }) => ({
+  name: "ManualPartitionAssigner",
+  version: 1,
+  async assign({ members, topics }) {
+    const assignment = {};
+    const sortedMembers = [...members].sort((a, b) =>
+      a.memberId.localeCompare(b.memberId)
+    );
+
+    topics.forEach((topic) => {
+      const partitions = cluster.findTopicPartitionMetadata(topic);
+      partitions.forEach((partitionMetadata, index) => {
+        if (index < sortedMembers.length) {
+          const memberId = sortedMembers[index].memberId;
+          if (!assignment[memberId]) {
+            assignment[memberId] = {};
+          }
+          if (!assignment[memberId][topic]) {
+            assignment[memberId][topic] = [];
+          }
+          assignment[memberId][topic].push(partitionMetadata.partitionId);
+        }
+      });
+    });
+
+    return Object.keys(assignment).map((memberId) => ({
+      memberId,
+      memberAssignment: AssignerProtocol.MemberAssignment.encode({
+        version: 1,
+        assignment: assignment[memberId],
+      }),
+    }));
+  },
+  protocol({ topics }) {
+    return {
+      name: "ManualPartitionAssigner",
+      metadata: AssignerProtocol.MemberMetadata.encode({
+        version: 1,
+        topics,
+      }),
+    };
+  },
+});
+
 const consumer0 = new KafkaConsumer(kafkaConnection.kafka, {
-  groupId: "hadi-consumer-0",
+  groupId: "manual-assignment-group",
+  partitionAssigner: createManualPartitionAssigner,
 });
 const consumer1 = new KafkaConsumer(kafkaConnection.kafka, {
-  groupId: "hadi-consumer-1",
+  groupId: "manual-assignment-group",
+  partitionAssigner: createManualPartitionAssigner,
 });
 
 app.use(express.json({ limit: "50mb" }));
@@ -38,8 +85,11 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
     await consumer0.connect();
     await consumer1.connect();
 
-    await consumer0.assign("MCI_NOTIF", [0]);
-    await consumer1.assign("MCI_NOTIF", [1]);
+    await consumer0.subscribe({ topic: "MCI_NOTIF", fromBeginning: false });
+    await consumer1.subscribe({ topic: "MCI_NOTIF", fromBeginning: false });
+
+    const consumer0JoinPromise = consumer0.waitForGroupJoin();
+    const consumer1JoinPromise = consumer1.waitForGroupJoin();
 
     consumer0.run((payload) => {
       try {
@@ -58,6 +108,9 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
         console.log("Error parsing value object:", error);
       }
     });
+
+    await Promise.all([consumer0JoinPromise, consumer1JoinPromise]);
+    console.log("All consumers have joined their groups");
 
     app
       .listen(port, () => {

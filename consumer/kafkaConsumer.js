@@ -1,10 +1,10 @@
-
 export class KafkaConsumer {
-  constructor(
-    kafka,
-    { groupId = "test-group", partitionAssigner = null } = {}
-  ) {
+  constructor(kafka, { groupId, partitionAssigner = null } = {}) {
     this.kafka = kafka;
+
+    if (!groupId || typeof groupId !== 'string' || groupId.trim() === '') {
+      throw new Error('groupId must be a non-empty string');
+    }
 
     const options = { groupId };
     if (partitionAssigner) {
@@ -22,8 +22,14 @@ export class KafkaConsumer {
     await this.consumer.disconnect();
   }
 
-  async subscribe(topic, { fromBeginning = false } = {}) {
+  async subscribe({ topic, fromBeginning = false } = {}) {
     await this.consumer.subscribe({ topic, fromBeginning });
+  }
+
+  async assign(topic, partitions) {
+    await this.consumer.assign(
+      partitions.map((partition) => ({ topic, partition }))
+    );
   }
 
   async waitForGroupJoin() {
@@ -57,11 +63,5 @@ export class KafkaConsumer {
         }
       },
     });
-  }
-
-  async assign(topic, partitions) {
-    await this.consumer.assign(
-      partitions.map((partition) => ({ topic, partition }))
-    );
   }
 }

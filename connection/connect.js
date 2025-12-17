@@ -1,4 +1,23 @@
-import { Kafka } from "kafkajs";
+import { Kafka, logLevel } from "kafkajs";
+
+const createCustomLogCreator = () => {
+  return ({ namespace, level, label, log }) => {
+    const { message, ...extra } = log;
+    
+    // Map log levels to readable strings
+    const levelMap = {
+      [logLevel.ERROR]: "ERROR",
+      [logLevel.WARN]: "WARN",
+      [logLevel.INFO]: "INFO",
+      [logLevel.DEBUG]: "DEBUG",
+    };
+    
+    const levelStr = levelMap[level] || "UNKNOWN";
+    
+    // Format: [SOURCE] LEVEL: message
+    console.log(`[${namespace}] ${levelStr}: ${message || JSON.stringify(extra)}`);
+  };
+};
 
 class KafkaConnect {
   constructor({ clientId, brokers }) {
@@ -11,6 +30,8 @@ class KafkaConnect {
         maxRetryTime: 30000,
         multiplier: 2,
       },
+      logLevel: logLevel.INFO,
+      logCreator: createCustomLogCreator,
       connectionTimeout: 3000,
       requestTimeout: 30000,
       enforceRequestTimeout: true,
