@@ -29,7 +29,7 @@ export class KafkaProducer {
     return result;
   }
 
-  async sendBulkMessage(topic, messages, partition = null) {
+  async sendBatch(topic, messages, partition = null) {
     const kafkaMessages = messages.map((msg) => ({
       key: msg.key,
       value: JSON.stringify(msg.value),
@@ -38,7 +38,7 @@ export class KafkaProducer {
 
     const result = await this.producer.send({
       topic,
-      kafkaMessages,
+      messages: kafkaMessages,
     });
 
     return result;

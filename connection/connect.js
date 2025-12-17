@@ -30,7 +30,14 @@ class KafkaConnect {
   async createTopic(topic, numPartitions) {
     const topics = await this.admin.listTopics();
 
-    if (topics.includes(topic)) return; // Topic already exists, no need to create
+    if (topics.includes(topic)) {
+      console.log(
+        `Topic ${topic} already exists with ${await this.getPartitionCount(
+          topic
+        )} partitions`
+      );
+      return;
+    } // Topic already exists, no need to create
 
     await this.admin.createTopics({
       topics: [
@@ -42,6 +49,7 @@ class KafkaConnect {
       waitForLeaders: true,
     });
 
+    console.log(`Topic ${topic} created with ${await this.getPartitionCount(topic)} partitions`);
   }
 
   async getPartitionCount(topic) {

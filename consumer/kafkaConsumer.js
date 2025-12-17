@@ -1,20 +1,25 @@
-import { Kafka } from "kafkajs";
 
 export class KafkaConsumer {
-  constructor(kafka, { groupId = "test-group", partitionAssigner = null } = {}) {
+  constructor(
+    kafka,
+    { groupId = "test-group", partitionAssigner = null } = {}
+  ) {
     this.kafka = kafka;
-    
+
     const options = { groupId };
     if (partitionAssigner) {
       options.partitionAssigners = [partitionAssigner];
     }
-    
-    
+
     this.consumer = this.kafka.consumer(options);
   }
 
   async connect() {
     await this.consumer.connect();
+  }
+
+  async disconnect() {
+    await this.consumer.disconnect();
   }
 
   async subscribe(topic, { fromBeginning = false } = {}) {
@@ -52,5 +57,11 @@ export class KafkaConsumer {
         }
       },
     });
+  }
+
+  async assign(topic, partitions) {
+    await this.consumer.assign(
+      partitions.map((partition) => ({ topic, partition }))
+    );
   }
 }
