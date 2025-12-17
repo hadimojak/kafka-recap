@@ -219,10 +219,10 @@ app.post("/produce/bulk", async (req, res) => {
     const totalSent = results.reduce((sum, count) => sum + count, 0);
 
     res.status(200).json({
-      ok: "true",
-      sent: "totalSent",
-      chunks: "chunks.length",
-      concurrency: "CONCURRENCY",
+      ok: true,
+      sent: totalSent,
+      chunks: chunks.length,
+      concurrency: CONCURRENCY,
     });
   } catch (err) {
     console.error("Error producing bulk messages:", err);
